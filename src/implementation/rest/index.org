@@ -490,7 +490,8 @@ def login():
     global system
     user=None
     if request.method == 'POST':
-        email = str(request.form['email'])
+        email = str(request.json['email'])
+        #email = str(request.form['email'])
         url_for_getting_the_user = "%s/users" % \
                                    (APP_URL)
         backend_resp = requests.get(url_for_getting_the_user)
@@ -501,9 +502,9 @@ def login():
                 print len(user_list)
                 print user_list[user]
                 if str(email) == str(user_list[user]['email']):
-                    current_app.logger.info("Successfully Logged in")
                     session['email'] = str(user_list[user]['email'])
-                    session['role_name'] = str(user_list[user]['role']['name'])
+                    role_name = str(user_list[user]['role']['name'])
+                    session['role_name'] = role_name
                     session['user_id'] = str(user_list[user]['id'])
                     for u in system.user_set:
                         if u.email==str(email):
@@ -512,17 +513,18 @@ def login():
                     print system.session_set
                     for x in system.session_set:
                         print x.user.email
-                    return redirect("/")
+                    print email
+                    return json.dumps([{'status' : 'success', 'email' : email, 'role' : role_name }])
                 else:
                     count = count + 1
             if count == len(user_list):
-                return render_template("login.html", message="Invalid email id")
-            
+                return json.dumps([{'status' : 'fail'}])
+        else:
+             return json.dumps([{'status' : 'fail'}])
+                
 @api.route('/auth/logout', methods=['GET'])
 def logout_handler():
     global system
-    
-    
     user=None
     ses=None
     system.get_users_from_database()
